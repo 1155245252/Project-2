@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import time
 
 FACTS_FILE = "facts.json"
 
@@ -41,13 +42,15 @@ def add_fact_to_archive():
     fact = fetch_random_fact()
     if not fact:
         print("No fact fetched.")
-        return
+        return False
     if fact_exists(fact, facts):
         print("Fact already exists in archive:", fact)
+        return False
     else:
         facts.append(fact)
         save_facts(facts)
         print("New fact added:", fact)
+        return True
 
 def show_all_facts():
     """Display all facts in the archive."""
@@ -59,7 +62,29 @@ def show_all_facts():
         for i, fact in enumerate(facts, 1):
             print(f"{i}. {fact}")
 
+def auto_collect_facts(interval_seconds=60, max_iterations=None):
+    """
+    Periodically fetch and store unique facts.
+    interval_seconds: time between fetches (default 60 seconds)
+    max_iterations: number of times to fetch (None = infinite)
+    """
+    iteration = 0
+    print(f"Starting automated fact collection every {interval_seconds} seconds. Press Ctrl+C to stop.")
+    try:
+        while True:
+            added = add_fact_to_archive()
+            iteration += 1
+            if max_iterations and iteration >= max_iterations:
+                print("Reached maximum iterations. Stopping.")
+                break
+            time.sleep(interval_seconds)
+    except KeyboardInterrupt:
+        print("\nFact collection stopped by user.")
+
 if __name__ == "__main__":
-    # Example usage: add a new fact and show all facts
-    add_fact_to_archive()
-    show_all_facts()
+    # To run once and show all facts, uncomment below:
+    # add_fact_to_archive()
+    # show_all_facts()
+
+    # To run automated collection, adjust interval and max_iterations as needed:
+    auto_collect_facts(interval_seconds=60, max_iterations=None)  # 60s interval, infinite loop
